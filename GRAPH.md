@@ -1,30 +1,57 @@
-# Taiwan Business Graph — API Index & Schema
+# Business Entity Graph — API Index & Schema (TW + Global)
 
-## Data Sources (tested, confirmed working)
+## Data Sources (all tested 2026-04-04)
 
-### Tier 1: No Auth Required
-| Source | URL | Data | Latency |
-|--------|-----|------|---------|
-| **GCIS Company (App-1)** | `data.gcis.nat.gov.tw/.../5F64D864-...` | Basic: name, status, capital, address, rep, dates | ~200ms |
-| **GCIS Business (App-1)** | `data.gcis.nat.gov.tw/.../F05D1060-...` | Same fields for 行號 (sole proprietorships) | ~200ms |
-| **g0v Ronny** | `company.g0v.ronny.tw/api/show/{taxId}` | **BEST**: company + directors + business items + 財政部 tax data + industry codes | ~300ms |
+### 🇹🇼 Taiwan — Tier 1: No Auth, Working NOW
+| Source | Endpoint | Data | Status |
+|--------|----------|------|--------|
+| **g0v Ronny** | `company.g0v.ronny.tw/api/show/{taxId}` | **RICHEST**: company + 董監事 + 營業項目 + 財政部稅籍 + 行業代碼 | ✅ ~300ms |
+| **GCIS Company (App-1)** | `data.gcis.nat.gov.tw/.../5F64D864-...` | Basic: name, status, capital, address, rep, dates | ✅ ~200ms |
+| **GCIS Business (App-1)** | `data.gcis.nat.gov.tw/.../F05D1060-...` | Same fields for 行號 (sole proprietorships) | ✅ ~200ms |
 
-### Tier 2: IP Whitelist Required (free, need to email opendata.gcis@gmail.com)
-| Source | URL | Data |
-|--------|-----|------|
-| GCIS App-2 (28 fields) | `data.gcis.nat.gov.tw/.../236BF797-...` | Extended company details |
-| GCIS App-3 | `data.gcis.nat.gov.tw/.../6BBA2268-...` | Branch offices, foreign companies |
-| GCIS Directors | `data.gcis.nat.gov.tw/.../DB290D1A-...` | 董監事 by tax ID |
-| GCIS Company Search | `data.gcis.nat.gov.tw/.../...` | Search by name + status |
-| GCIS Capital Search | `data.gcis.nat.gov.tw/.../...` | Filter by capital range |
-| GCIS Change Log | `data.gcis.nat.gov.tw/.../...` | Companies changed on date |
+### 🇹🇼 Taiwan — Tier 2: IP Whitelist (free, email opendata.gcis@gmail.com)
+| Source | Endpoint | Data | Status |
+|--------|----------|------|--------|
+| GCIS App-2 (28 fields) | `data.gcis.nat.gov.tw/.../236BF797-...` | Extended company details | ⚠️ Need IP whitelist |
+| GCIS App-3 | `data.gcis.nat.gov.tw/.../6BBA2268-...` | Branch offices, foreign companies | ⚠️ Need IP whitelist |
+| GCIS Directors | `data.gcis.nat.gov.tw/.../DB290D1A-...` | 董監事 by tax ID | ⚠️ Need IP whitelist |
+| GCIS Company Search | By name + status code | Name search | ⚠️ Need IP whitelist |
+| GCIS Capital Search | By capital range code (A-G) | Filter by capital | ⚠️ Need IP whitelist |
+| **GCIS Change Log** | `Change_Of_Approval_Data={YYYMMDD}` | **EVENT STREAM**: companies changed on date | ⚠️ Need IP whitelist |
 
-### Tier 3: Web Scraping (no API)
-| Source | URL | Data |
-|--------|-----|------|
-| Findbiz (gov portal) | `findbiz.nat.gov.tw` | Unified search, most complete |
-| comptw.com | `comptw.com` | 18 data sources aggregated, risk scoring |
-| MOPS (公開資訊觀測站) | `mops.twse.com.tw` | Public company financials (listed only) |
+### 🇹🇼 Taiwan — Tier 3: Competitors / Partners (same concept, different source)
+| Source | URL | Data | Type | Status |
+|--------|-----|------|------|--------|
+| **comptw.com** | `comptw.com/{taxId}` | 18 gov sources aggregated, risk score, 關係圖譜 | 🟥 Competitor (web scrape) | ✅ Web only |
+| **twincn.com** | `twincn.com/item.aspx?no={taxId}` | 7M entities, directors, history | 🟥 Competitor (web scrape) | ✅ Web only |
+| **twinc.com.tw** | `twinc.com.tw` | Similar to twincn, separate operator | 🟥 Competitor (web scrape) | ✅ Web only |
+| **opendata.vip** | `opendata.vip/tool/company` | API integration layer over GCIS | 🟧 Partner concept | ✅ |
+| **data.zhupiter.com** | `poi.zhupiter.com/taxid-{taxId}.html` | Open data browser | 🟧 Adjacent | ✅ Web only |
+| **findcompany.com.tw** | `findcompany.com.tw/{company_name}` | Name-based search | 🟥 Competitor (web scrape) | ✅ Web only |
+| **TEJ (KYC platform)** | `kyc.tej.com.tw/web_p/data_rest.php` | Commercial-grade REST API | 🟥 Premium competitor | ⚠️ Paid API key |
+| **Findbiz** | `findbiz.nat.gov.tw` | Gov unified portal, most complete UI | 🟩 Gov source | ✅ Web only |
+| **MOPS** | `mops.twse.com.tw` | Public company financials (上市櫃 only) | 🟩 Gov source | ✅ Web only |
+
+### 🌍 Global — Tier 1: No Auth, Working NOW
+| Source | Endpoint | Data | Status |
+|--------|----------|------|--------|
+| **GLEIF LEI** | `api.gleif.org/api/v1/lei-records` | Legal Entity Identifiers, 3M+ entities worldwide | ✅ Free, no key |
+| **OpenCorporates** | `api.opencorporates.com/v0.4/companies/search` | 200M+ companies, 140 jurisdictions | ⚠️ Free tier limited, paid API key for full |
+
+### 🌍 Global — Aerospace / Defense Supply Chain
+| Source | Endpoint | Data | Status |
+|--------|----------|------|--------|
+| **SAM.gov Entity API** | `api.sam.gov/entity-information/v3/entities` | US gov supplier registry, CAGE codes, NAICS | ⚠️ Free API key required (register at sam.gov) |
+| **DLA CAGE** | `cage.dla.mil` | Commercial & Government Entity codes (defense) | ⚠️ Web search only, no public API |
+| **EASA** | `easa.europa.eu` | EU aviation safety, approved orgs | 🟨 No public API |
+| **FAA** | `api.faa.gov` | US aviation registrations, airworthiness | ⚠️ Some APIs public |
+
+### 📄 Formal Application Needed (正規申請流)
+| Source | How to Apply | Priority |
+|--------|-------------|----------|
+| **GCIS IP Whitelist** | Email opendata.gcis@gmail.com with [告知書](https://data.gcis.nat.gov.tw/resources/doc/apply.doc), include server IP | HIGH — unlocks directors API + change log event stream |
+| **SAM.gov API Key** | Register at sam.gov, request API key | MEDIUM — unlocks US defense supplier graph |
+| **OpenCorporates API** | Apply at opencorporates.com/api_accounts | LOW — paid, but cross-jurisdiction graph |
 
 ## The Graph
 
