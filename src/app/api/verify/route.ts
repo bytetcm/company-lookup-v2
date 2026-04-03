@@ -14,10 +14,10 @@ import { NextRequest, NextResponse } from "next/server";
  *   4. GLEIF LEI (global, financial entities)
  */
 
+import { fetchCompany, fetchBusiness, isValidTaxId } from "@/lib/gcis";
+
 // --- Source fetchers ---
 
-const GCIS_COMPANY = "https://data.gcis.nat.gov.tw/od/data/api/5F64D864-61CB-4D0D-8AD9-492047CC1EA6";
-const GCIS_BUSINESS = "https://data.gcis.nat.gov.tw/od/data/api/F05D1060-7D57-4763-BDCE-0DAF5975AFE0";
 const G0V_API = "https://company.g0v.ronny.tw/api/show";
 const GLEIF_API = "https://api.gleif.org/api/v1/lei-records";
 
@@ -70,19 +70,7 @@ async function fetchWithTiming(
   }
 }
 
-async function fetchGCIS(url: string, taxId: string): Promise<Record<string, unknown> | null> {
-  const res = await fetch(
-    `${url}?$format=json&$filter=Business_Accounting_NO eq ${taxId}`,
-    { headers: { Accept: "application/json" }, next: { revalidate: 3600 } }
-  );
-  if (!res.ok) return null;
-  const text = await res.text();
-  if (!text || text.length === 0) return null;
-  try {
-    const data = JSON.parse(text);
-    return data?.length > 0 ? data[0] : null;
-  } catch { return null; }
-}
+
 
 async function fetchG0v(taxId: string): Promise<Record<string, unknown> | null> {
   const res = await fetch(`${G0V_API}/${taxId}`, {
@@ -175,14 +163,14 @@ function calculateConfidence(
 export async function GET(request: NextRequest) {
   const taxId = request.nextUrl.searchParams.get("taxId");
 
-  if (!taxId || !/^\d{8}$/.test(taxId)) {
+  if (!taxId || !isValidTaxId(taxId)) {
     return NextResponse.json({ error: "請提供 8 位數統一編號" }, { status: 400 });
   }
 
   // Query ALL sources in parallel
   const sources = await Promise.all([
-    fetchWithTiming("gcis_company", "經濟部商業發展署", "taiwan", () => fetchGCIS(GCIS_COMPANY, taxId)),
-    fetchWithTiming("gcis_business", "經濟部商業發展署", "taiwan", () => fetchGCIS(GCIS_BUSINESS, taxId)),
+    fetchWithTiming("gcis_company", "經濟部商業發展署", "taiwan", () => fetchCompany(taxId)),
+    fetchWithTiming("gcis_business", "經濟部商業發展署", "taiwan", () => fetchBusiness(taxId)),
     fetchWithTiming("g0v_ronny", "g0v.tw (community aggregator)", "taiwan", () => fetchG0v(taxId)),
     // GLEIF needs company name — we'll chain it after first results
   ]);
