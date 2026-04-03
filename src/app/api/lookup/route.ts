@@ -1,7 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const MOEA_URL =
+const COMPANY_API =
   "https://data.gcis.nat.gov.tw/od/data/api/5F64D864-61CB-4D0D-8AD9-492047CC1EA6";
+const BUSINESS_API =
+  "https://data.gcis.nat.gov.tw/od/data/api/F05D1060-7D57-4763-BDCE-0DAF5975AFE0";
+
+async function fetchGCIS(url: string, taxId: string) {
+  const res = await fetch(
+    `${url}?$format=json&$filter=Business_Accounting_NO eq ${taxId}`,
+    { headers: { Accept: "application/json" }, next: { revalidate: 3600 } }
+  );
+  if (!res.ok) return null;
+  const text = await res.text();
+  if (!text || text.length === 0) return null;
+  try {
+    const data = JSON.parse(text);
+    return data?.length > 0 ? data[0] : null;
+  } catch {
+    return null;
+  }
+}
 
 export async function GET(request: NextRequest) {
   const taxId = request.nextUrl.searchParams.get("taxId");
@@ -14,35 +32,27 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const res = await fetch(
-      `${MOEA_URL}?$format=json&$filter=Business_Accounting_NO eq ${taxId}`,
-      {
-        headers: { Accept: "application/json" },
-        next: { revalidate: 3600 },
-      }
-    );
+    const [company, business] = await Promise.all([
+      fetchGCIS(COMPANY_API, taxId),
+      fetchGCIS(BUSINESS_API, taxId),
+    ]);
 
-    if (!res.ok) {
-      return NextResponse.json(
-        { error: `上游查詢失敗 (${res.status})` },
-        { status: 502 }
-      );
-    }
-
-    const data = await res.json();
-
-    if (!data || data.length === 0) {
+    const record = company || business;
+    if (!record) {
       return NextResponse.json(
         { error: "查無此統一編號" },
         { status: 404 }
       );
     }
 
-    return NextResponse.json(data[0], {
-      headers: {
-        "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400",
-      },
-    });
+    return NextResponse.json(
+      { ...record, _type: company ? "公司" : "行號" },
+      {
+        headers: {
+          "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400",
+        },
+      }
+    );
   } catch {
     return NextResponse.json(
       { error: "查詢服務暫時無法使用" },

@@ -6,6 +6,7 @@ import { lookup } from "@/app/actions";
 interface CompanyResult {
   taxId: string;
   name: string;
+  type: string;
   status: string;
   capital: string;
   address: string;
@@ -68,15 +69,20 @@ export function LookupForm() {
 
       {result && (
         <div className="p-6 rounded-xl bg-gray-800/50 border border-gray-700 space-y-4">
-          <div className="flex items-baseline justify-between">
+          <div className="flex items-baseline justify-between flex-wrap gap-2">
             <h2 className="text-xl font-bold">{result.name}</h2>
-            <span className={`text-sm px-2 py-0.5 rounded-full ${
-              result.status === "核准設立"
-                ? "bg-green-900/50 text-green-400"
-                : "bg-yellow-900/50 text-yellow-400"
-            }`}>
-              {result.status}
-            </span>
+            <div className="flex gap-2">
+              <span className="text-sm px-2 py-0.5 rounded-full bg-blue-900/50 text-blue-400">
+                {result.type}
+              </span>
+              <span className={`text-sm px-2 py-0.5 rounded-full ${
+                result.status === "核准設立" || result.status === "營業中"
+                  ? "bg-green-900/50 text-green-400"
+                  : "bg-yellow-900/50 text-yellow-400"
+              }`}>
+                {result.status}
+              </span>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
